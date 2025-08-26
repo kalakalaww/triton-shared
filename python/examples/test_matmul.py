@@ -30,6 +30,13 @@ import benchmark
 #     ],
 #     key=['M', 'N', 'K'],
 # )
+
+from triton.backends.triton_shared.driver import CPUDriver
+triton.runtime.driver.set_active(CPUDriver())
+device=torch.device("cpu")
+
+
+
 @triton.jit
 def matmul_kernel(
         # Pointers to matrices
