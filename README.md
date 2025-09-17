@@ -1,5 +1,7 @@
 # triton-shared
 
+中文版: `README_zh.md`（程序员友好的中文翻译）
+
 A shared middle-layer for the Triton Compiler.
 
 Currently the middle layer is not complete but has enough functionality to demonstrate how it can work. The general idea is that Triton IR is lowered into an MLIR core dialect to allow it to be both shared across Triton targets as well as allow back-ends to be shared with other languages.
