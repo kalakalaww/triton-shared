@@ -1,0 +1,32 @@
+module {
+  func.func @amax_kernel_2(%arg0: memref<*xf32> {tt.divisibility = 16 : i32}, %arg1: memref<*xf32> {tt.divisibility = 16 : i32}, %arg2: i32, %arg3: i32, %arg4: i32, %arg5: i32, %arg6: i32, %arg7: i32, %arg8: i32) {
+    %c4 = arith.constant 4 : index
+    %c0 = arith.constant 0 : index
+    %cst = arith.constant 0xFF800000 : f32
+    %reinterpret_cast = memref.reinterpret_cast %arg0 to offset: [0], sizes: [4], strides: [1] : memref<*xf32> to memref<4xf32, strided<[1]>>
+    %0 = arith.index_cast %arg2 : i32 to index
+    %1 = arith.minsi %0, %c4 : index
+    %2 = arith.maxsi %1, %c0 : index
+    %alloc = memref.alloc() : memref<4xf32>
+    %3 = arith.cmpi slt, %2, %c4 : index
+    scf.if %3 {
+      linalg.fill ins(%cst : f32) outs(%alloc : memref<4xf32>)
+    }
+    %subview = memref.subview %reinterpret_cast[0] [%2] [1] : memref<4xf32, strided<[1]>> to memref<?xf32, strided<[1]>>
+    %subview_0 = memref.subview %alloc[0] [%2] [1] : memref<4xf32> to memref<?xf32, strided<[1]>>
+    memref.copy %subview, %subview_0 : memref<?xf32, strided<[1]>> to memref<?xf32, strided<[1]>>
+    %4 = bufferization.to_tensor %alloc restrict writable : memref<4xf32> to tensor<4xf32>
+    %5 = bufferization.alloc_tensor() : tensor<f32>
+    %inserted = tensor.insert %cst into %5[] : tensor<f32>
+    %reduced = linalg.reduce ins(%4 : tensor<4xf32>) outs(%inserted : tensor<f32>) dimensions = [0] 
+      (%in: f32, %init: f32) {
+        %6 = arith.maxnumf %in, %init : f32
+        linalg.yield %6 : f32
+      }
+    %extracted = tensor.extract %reduced[] : tensor<f32>
+    %reinterpret_cast_1 = memref.reinterpret_cast %arg1 to offset: [%c0], sizes: [1], strides: [1] : memref<*xf32> to memref<1xf32, strided<[1], offset: ?>>
+    affine.store %extracted, %reinterpret_cast_1[0] : memref<1xf32, strided<[1], offset: ?>>
+    return
+  }
+}
+

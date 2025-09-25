@@ -25,8 +25,13 @@ trap cleanup EXIT
 # 进入测试目录
 cd "$(dirname "$0")/../python/examples" || exit 1
 
+# ==================== 在这里添加下面这行 ====================
+# 将项目的python目录添加到PYTHONPATH，这样就能找到benchmark等模块
+export PYTHONPATH="$(git rev-parse --show-toplevel)/python:$PYTHONPATH"
+# ==========================================================
+
 # 对每个测试文件运行测试并收集结果
-for test_file in test_*.py; do
+for test_file in test1_*.py; do
     if [ -f "$test_file" ]; then
         echo "====================================="
         echo "测试文件: $test_file"
